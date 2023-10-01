@@ -1,0 +1,61 @@
+version: "3"
+services:
+  # コンテナの作成
+  web:
+    # コンテナ名
+    container_name: "meimei-web"
+    # このコンテナで使用するDockerイメージの指定
+    build:
+      dockerfile: "./container/web/Dockerfile"
+    # ホスト側のポート:コンテナ側のポートを指定
+    ports:
+      - "8080:80"
+    volumes:
+      - "./src:/var/www/html"
+  # PHPサーバー
+  php:
+    # コンテナ名
+    container_name: "meimei-php"
+    # コンテナの作成に使用するDockerfileのパス
+    build:
+      dockerfile: "./container/php/Dockerfile"
+    ports:
+      - "5173:5173"
+    # srcディレクトリ内のファイルをコンテナ内の~/var/www/html配下にマウント
+    volumes:
+      - "./src:/var/www/html"
+
+  # DBサーバー
+  db:
+    # コンテナ名
+    container_name: "meimei-db"
+    # コンテナの作成に使用するDockerfileのパス
+    build:
+      dockerfile: "./container/db/Dockerfile"
+    # ホスト側のポート:コンテナ側のポートを指定
+    ports:
+      - "3306:3306"
+    # 環境変数の指定
+    environment:
+      - "MYSQL_ROOT_PASSWORD=password"
+      - "MYSQL_DATABASE=database"
+      - "MYSQL_USER=user"
+      - "MYSQL_PASSWORD=password"
+    # srcディレクトリ内のファイルをコンテナ内の~/var/www/html配下にマウント
+    volumes:
+      - "./container/db/data:/var/lib/mysql"
+
+  # phpmyadmin
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    depends_on:
+      - db
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOSTS=db # データベース名
+      - PMA_USER=user # phpMyAdminのユーザー名
+      - PMA_PASSWORD=password # phpMyAdminのパスワード
+    ports:
+      - "3000:80" # localhost:3000でアクセスできる
+    volumes:
+      - ./container/phpmyadmin/sessions:/sessions
